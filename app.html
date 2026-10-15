@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Winch Math - app</title>
+<link rel="stylesheet" href="https://unpkg.com/sakura.css/css/sakura.css">
+<style>
+  :root { --accent: #4a4a6a; }
+  h1 { color: var(--accent); margin-bottom: 0.2em; }
+  .tag { color: var(--accent); font-style: italic; }
+  .card { border: 1px solid #ddd; border-left: 4px solid var(--accent); padding: 1em 1.2em; margin: 1.2em 0; border-radius: 4px; }
+  .big { font-size: 1.2rem; font-weight: 700; color: var(--accent); margin-top: 0.8em; }
+  .err { color: #b00; font-weight: 700; }
+  label { display: block; margin-top: 0.6em; font-size: 0.9em; }
+  input, select { max-width: 12em; }
+  .foot { margin-top: 2.5em; font-size: 0.85em; color: #777; }
+</style>
+</head>
+<body>
+<h1>Winch Math</h1>
+<p class="tag">Size truth, layer truth and draw truth - labeled norms, honest arithmetic.</p>
+
+<div class="card">
+  <h3>The size truth</h3>
+  <label for="s-weight">Vehicle weight (pounds)</label>
+  <input id="s-weight" type="number" step="any" value="5000">
+  <label for="s-rating">Winch rating on the box (pounds)</label>
+  <input id="s-rating" type="number" step="any" value="9500">
+  <p class="big" id="s-out"></p>
+</div>
+
+<div class="card">
+  <h3>The layer truth</h3>
+  <label for="l-rating">Winch rating on the box (pounds)</label>
+  <input id="l-rating" type="number" step="any" value="9500">
+  <label for="l-layers">Layers already on the drum</label>
+  <input id="l-layers" type="number" step="1" value="3">
+  <p class="big" id="l-out"></p>
+</div>
+
+<div class="card">
+  <h3>The draw truth</h3>
+  <label for="d-pull">This pull (pounds)</label>
+  <input id="d-pull" type="number" step="any" value="6000">
+  <label for="d-rating">Winch rating on the box (pounds)</label>
+  <input id="d-rating" type="number" step="any" value="9500">
+  <label for="d-amps">Full-load amps (spec sheet)</label>
+  <input id="d-amps" type="number" step="any" value="430">
+  <label for="d-batt">Battery amp-hours</label>
+  <input id="d-batt" type="number" step="any" value="70">
+  <p class="big" id="d-out"></p>
+</div>
+
+<p class="foot">The one-and-a-half sizing norm, the 0.87 layer factor and the half-usable battery are labeled norms - the arithmetic is honest, and the snatch block keeps the honest ledger.</p>
+
+<script src="engine.js"></script>
+<script>
+function g(id){ return document.getElementById(id); }
+function v(id){ var n = parseFloat(g(id).value); return isNaN(n) ? NaN : n; }
+function show(id, s, bad){ var el = g(id); el.textContent = s; el.className = bad ? "err big" : "big"; }
+
+function runSize(){
+  var args = [v("s-weight"), v("s-rating")];
+  var r = WinchMath.sizePlan.apply(null, args);
+  if (r.error) return show("s-out", r.error, true);
+  show("s-out", WinchMath.renderSize.apply(null, [r].concat(args)), false);
+}
+function runLayer(){
+  var args = [v("l-rating"), v("l-layers")];
+  var r = WinchMath.layerPlan.apply(null, args);
+  if (r.error) return show("l-out", r.error, true);
+  show("l-out", WinchMath.renderLayer.apply(null, [r].concat(args)), false);
+}
+function runDraw(){
+  var args = [v("d-pull"), v("d-rating"), v("d-amps"), v("d-batt")];
+  var r = WinchMath.drawPlan.apply(null, args);
+  if (r.error) return show("d-out", r.error, true);
+  show("d-out", WinchMath.renderDraw.apply(null, [r].concat(args)), false);
+}
+["s-weight", "s-rating"].forEach(function(id){ g(id).addEventListener("input", runSize); });
+["l-rating", "l-layers"].forEach(function(id){ g(id).addEventListener("input", runLayer); });
+["d-pull", "d-rating", "d-amps", "d-batt"].forEach(function(id){ g(id).addEventListener("input", runDraw); });
+runSize(); runLayer(); runDraw();
+</script>
+</body>
+</html>
